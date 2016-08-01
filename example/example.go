@@ -31,9 +31,9 @@ var (
 )
 
 // Below there is an exemplary implementation of server side session.
-// It is overly simpistic for the purposes of the example, as the main point
+// It is overly simplistic for the purposes of the example, as the main point
 // is the usage of the SDK.
-// Real applications could / should implemet session in more advanced manner
+// Real applications could / should implement session in more advanced manner
 // or use whatever is provided from the framework they use.
 
 // CheckSession verifies that the request provides a valid session.
