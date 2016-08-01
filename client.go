@@ -15,8 +15,7 @@ import (
 )
 
 const (
-	sleepPeriod = 3 * time.Second
-	// DiscoveryURI is the discovery URL of the Miracl OIDC server, without the `.well-known/openid-configuration`
+	sleepPeriod  = 3 * time.Second
 	DiscoveryURI = "https://api.mpin.io"
 )
 
@@ -25,6 +24,7 @@ type Config struct {
 	ClientID        string          // RP client ID at authorization server (`client_id` in OIDC 1.0). Required.
 	ClientSecret    string          // RP client secret at authorization server (`client_secret` in OIDC 1.0). Required.
 	RedirectURI     string          // URI for back redirection from authorization server to RP (`redirect_uri` in OIDC 1.0). Required.
+	DiscoveryURI    string          // DiscoveryURI is the discovery URL of the Miracl OIDC server, without the `.well-known/openid-configuration`
 	HTTPClient      *http.Client    // HTTP client to use for requests to authorization server. If left out, `http.DefaultClient` will be used
 	ProviderRetries int             // Number of retries to make while fetching provider configuration from discovery URI.
 	Clock           clockwork.Clock // A clock object. If left out, real clock will be used. Fake clock can be passed for testing.
@@ -85,13 +85,17 @@ func populateDefaultConfig(cfg Config) Config {
 // Normally you need to populate `ClientID`, `ClientSecret`
 // and `RedirectURI` fields in `mcfg` argument.
 func NewClient(mcfg Config) (mc Client, err error) {
+	discoveryURI := DiscoveryURI
+	if mcfg.DiscoveryURI != "" {
+		discoveryURI = mcfg.DiscoveryURI
+	}
 
 	mcfg = populateDefaultConfig(mcfg)
 
 	var provider oidc.ProviderConfig
 	for tries := 0; true; {
 
-		provider, err = oidc.FetchProviderConfig(mcfg.HTTPClient, DiscoveryURI)
+		provider, err = oidc.FetchProviderConfig(mcfg.HTTPClient, discoveryURI)
 		if err == nil {
 			break
 		}
@@ -118,7 +122,7 @@ func NewClient(mcfg Config) (mc Client, err error) {
 		return nil, err
 	}
 
-	oidc.SyncProviderConfig(DiscoveryURI)
+	oidc.SyncProviderConfig(discoveryURI)
 
 	oauth, err := oidc.OAuthClient()
 	if err != nil {

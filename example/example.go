@@ -27,6 +27,8 @@ var (
 	templatesDir = flag.String("templates-dir", "templates", "Template files location")
 	debug        = flag.Bool("debug", false, "Debug mode")
 
+	backend = flag.String("backend", maas.DiscoveryURI, "Backend url")
+
 	mc maas.Client
 )
 
@@ -102,6 +104,7 @@ func main() {
 		ClientID:     *clientID,
 		ClientSecret: *clientSecret,
 		RedirectURI:  *redirectURL,
+		DiscoveryURI: *backend,
 	})
 	if err != nil {
 		log.Fatal(err)
