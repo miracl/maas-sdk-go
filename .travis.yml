@@ -6,12 +6,6 @@ branches:
   except:
     - release
 
-branches:
-  only:
-    - master
-    - develop
-    - travis
-
 go:
   - 1.6
   - 1.7
