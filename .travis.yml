@@ -1,11 +1,5 @@
 language: go
 
-sudo: false
-
-branches:
-  except:
-    - release
-
 go:
   - 1.x
   - tip
