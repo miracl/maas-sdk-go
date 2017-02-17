@@ -1,14 +1,7 @@
 language: go
 
-sudo: false
-
-branches:
-  except:
-    - release
-
 go:
-  - 1.6
-  - 1.7
+  - 1.x
   - tip
 
 matrix:
@@ -16,8 +9,6 @@ matrix:
     - go: tip
 
 before_install:
-  - if [ -n "$GH_USER" ]; then git config --global github.user ${GH_USER}; fi;
-  - if [ -n "$GH_TOKEN" ]; then git config --global github.token ${GH_TOKEN}; fi;
   - go get github.com/mattn/goveralls
 
 before_script:
