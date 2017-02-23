@@ -11,13 +11,6 @@
           integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7"
           crossorigin="anonymous">
 
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
-
     <style type="text/css">
         h1 {
             border-bottom: 1px solid #eee;
@@ -28,12 +21,49 @@
             width: 100%;
             margin-bottom: 15px;
         }
+
+        #example-email{
+            margin-bottom: 20px;
+        }
     </style>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+
+     <!-- The following script is used to populate prerollid if provided during the authentication process -->
+    <script type="application/javascript">
+        $(document).ready(function(){
+            $("input[type=email]").keyup(function(){
+                var email = $("input[type=email]").val();
+                $("#btmpin").attr("data-prerollid", email);
+            });
+        });
+    </script>
 
 </head>
 <body>
 <div class="container">
+
+    {{define "login_block"}}
+        <div class="col-md-12">
+            <div class="col-md-8" id="example-email">
+                <div class="form-group">
+                    <label for="example-email-input" class="col-xs-2 col-form-label">Log In As:</label>
+                    <div class="col-xs-10">
+                        <input class="form-control" type="email" id="example-email-input" placeholder="email address">
+                    </div>
+                </div>
+            </div>
+            <div id="btmpin"></div>
+        </div>
+    {{end}}
+
     <div class="row">
         <div class="col-md-12">
             <h1> Go SDK example</h1>
@@ -51,9 +81,7 @@
     </div>
 
     {{ if and (.Retry) (not (eq .AuthURL "")) }}
-        <div class="col-md-12">
-            <a class="btn btn-primary" id="btmpin">Retry?</a>
-        </div>
+        {{template "login_block" .}}
     {{ end }}
     {{ if not .Retry }}
         <div class="row">
@@ -69,9 +97,7 @@
                 </div>
             {{ else }}
                 {{ if not (eq .AuthURL "") }}
-                <div class="col-md-12">
-                     <a class="btn btn-primary" id="btmpin">Login</a>
-                </div>
+                    {{template "login_block" .}}
                 {{ end }}
             {{ end }}
         </div>
