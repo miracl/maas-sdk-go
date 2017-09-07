@@ -29,6 +29,8 @@ var (
 
 	backend = flag.String("backend", maas.DiscoveryURI, "Backend url")
 
+	retries = flag.Int("retries", 10, "Number of retries to make while getting a maas.Client instance")
+
 	mc maas.Client
 )
 
@@ -100,12 +102,7 @@ func main() {
 		log.Fatal("Redirect URL required")
 	}
 
-	mc, err := maas.NewClient(maas.Config{
-		ClientID:     *clientID,
-		ClientSecret: *clientSecret,
-		RedirectURI:  *redirectURL,
-		DiscoveryURI: *backend,
-	})
+	mc, err := getClient(*retries)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -190,4 +187,25 @@ func main() {
 	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func getClient(retries int) (mc maas.Client, err error) {
+	for tries := 0; tries < retries; tries++ {
+		mc, err = maas.NewClient(maas.Config{
+			ClientID:     *clientID,
+			ClientSecret: *clientSecret,
+			RedirectURI:  *redirectURL,
+			DiscoveryURI: *backend,
+		})
+
+		if err == nil {
+			break
+		}
+
+		log.Println(err, "\nRetrying...")
+
+		time.Sleep(5 * time.Second)
+	}
+
+	return mc, err
 }
