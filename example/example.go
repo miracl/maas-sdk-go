@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"path/filepath"
 	"time"
 
 	"github.com/miracl/maas-sdk-go"
@@ -85,6 +84,8 @@ type context struct {
 	UserID     string
 }
 
+var parsedTemplates map[string]*template.Template
+
 func main() {
 	// Parse command line options
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.LUTC)
@@ -108,6 +109,14 @@ func main() {
 	})
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	var pages = map[string][]string{
+		"index": {"index.tmpl"},
+	}
+	parsedTemplates, err := parseTemplates(*templatesDir, pages)
+	if err != nil {
+		log.Fatal("Parsing templates: ", err)
 	}
 
 	sessions := map[string]maas.UserInfo{}
@@ -146,10 +155,8 @@ func main() {
 		}
 
 		// Else show the login page, along with any error messages
-		if t, err := template.New("index.tmpl").ParseFiles(filepath.Join(*templatesDir, "index.tmpl")); err != nil {
-			log.Fatalf("Failed to parse template: %+v", err)
-		} else {
-			t.Execute(w, ctx)
+		if err = parsedTemplates["index"].Execute(w, ctx); err != nil {
+			log.Println(err)
 		}
 	})
 	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
@@ -177,12 +184,8 @@ func main() {
 			ctx.Email = user.Email
 		}
 
-		if t, err := template.New("index.tmpl").ParseFiles(filepath.Join(*templatesDir, "index.tmpl")); err != nil {
-			log.Fatalf("Failed to parse template: %+v", err)
-		} else {
-			if err = t.Execute(w, ctx); err != nil {
-				log.Println(err)
-			}
+		if err = parsedTemplates["index"].Execute(w, ctx); err != nil {
+			log.Println(err)
 		}
 	})
 
@@ -190,4 +193,23 @@ func main() {
 	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func parseTemplates(templatesDir string, pages map[string][]string) (map[string]*template.Template, error) {
+	templates := map[string]*template.Template{}
+	for page, tmpls := range pages {
+		files := make([]string, len(tmpls))
+		for i, t := range tmpls {
+			files[i] = templatesDir + "/" + t
+		}
+
+		var err error
+		templates[page], err = template.ParseFiles(files...)
+		if err != nil {
+			return nil, err
+		}
+
+	}
+
+	return templates, nil
 }
