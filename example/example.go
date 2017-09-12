@@ -156,7 +156,7 @@ func main() {
 
 		// Else show the login page, along with any error messages
 		if err = parsedTemplates["index"].Execute(w, ctx); err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 	})
 	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
@@ -185,7 +185,7 @@ func main() {
 		}
 
 		if err = parsedTemplates["index"].Execute(w, ctx); err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 	})
 
