@@ -15,7 +15,6 @@ import (
 )
 
 const (
-	sleepPeriod = 3 * time.Second
 	// DiscoveryURI is the discovery URL of the Miracl OIDC server
 	DiscoveryURI = "https://api.mpin.io"
 )
@@ -28,6 +27,7 @@ type Config struct {
 	DiscoveryURI    string          // DiscoveryURI is the discovery URL of the Miracl OIDC server, without the `.well-known/openid-configuration`
 	HTTPClient      *http.Client    // HTTP client to use for requests to authorization server. If left out, `http.DefaultClient` will be used
 	ProviderRetries int             // Number of retries to make while fetching provider configuration from discovery URI.
+	RetryPeriod     time.Duration   // Wait period between retries.
 	Clock           clockwork.Clock // A clock object. If left out, real clock will be used. Fake clock can be passed for testing.
 	Scope           []string        // Scope of the claim (`scope` in OIDC 1.0). If not set, functional default will be populated.
 }
@@ -105,7 +105,7 @@ func NewClient(mcfg Config) (mc Client, err error) {
 			return nil, err
 		}
 
-		mcfg.Clock.Sleep(sleepPeriod)
+		mcfg.Clock.Sleep(mcfg.RetryPeriod)
 	}
 
 	credentials := oidc.ClientCredentials{
