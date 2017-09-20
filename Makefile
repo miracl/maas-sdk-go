@@ -69,6 +69,10 @@ test:
 	tee >(PATH=$(GOPATH)/bin:$(PATH) go-junit-report > target/test/report.xml); \
 	test $${PIPESTATUS[0]} -eq 0
 
+# Run the integration tests
+integration:
+	GOPATH=$(GOPATH) go test -tags=integration -v
+
 # Format the source code
 format:
 	@find ./*.go -type f -name "*.go" -exec gofmt -s -w {} \;
@@ -119,7 +123,7 @@ docs:
 	@echo '<html><head><meta http-equiv="refresh" content="0;./127.0.0.1:6060/pkg/github.com/'${OWNER}'/'${PROJECT}'/index.html"/></head><a href="./127.0.0.1:6060/pkg/github.com/'${OWNER}'/'${PROJECT}'/index.html">'${PKGNAME}' Documentation ...</a></html>' > target/docs/index.html
 
 # Alias to run targets: fmtcheck test vet lint coverage
-qa: fmtcheck test vet lint coverage cyclo ineffassign misspell astscan
+qa: fmtcheck test vet lint coverage cyclo ineffassign misspell astscan integration
 
 # --- INSTALL ---
 
