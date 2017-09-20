@@ -28,6 +28,9 @@ var (
 
 	backend = flag.String("backend", maas.DiscoveryURI, "Backend url")
 
+	retries     = flag.Int("retries", 10, "Number of retries to make while getting a maas.Client instance")
+	retryPeriod = flag.String("retry-period", "5s", "Wait period between retries used while getting a maas.Client instance")
+
 	mc maas.Client
 )
 
@@ -101,12 +104,20 @@ func main() {
 		log.Fatal("Redirect URL required")
 	}
 
+	retryPeriodDuration, err := time.ParseDuration(*retryPeriod)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	mc, err := maas.NewClient(maas.Config{
-		ClientID:     *clientID,
-		ClientSecret: *clientSecret,
-		RedirectURI:  *redirectURL,
-		DiscoveryURI: *backend,
+		ClientID:        *clientID,
+		ClientSecret:    *clientSecret,
+		RedirectURI:     *redirectURL,
+		DiscoveryURI:    *backend,
+		ProviderRetries: *retries,
+		RetryPeriod:     retryPeriodDuration,
 	})
+
 	if err != nil {
 		log.Fatal(err)
 	}
