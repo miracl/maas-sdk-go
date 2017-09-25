@@ -61,10 +61,6 @@ func (d *testDoer) Do(rq *http.Request) (*http.Response, error) {
 }
 
 func TestGetAuthRequestURL(t *testing.T) {
-	if *integration {
-		t.Skip()
-	}
-
 	oac := &testOAC{
 		URL: "test-url",
 		Err: nil,
@@ -92,9 +88,6 @@ func TestGetAuthRequestURL(t *testing.T) {
 }
 
 func TestValidateAuth(t *testing.T) {
-	if *integration {
-		t.Skip()
-	}
 
 	oac := &testOAC{
 		Result: oauth2.TokenResponse{
@@ -132,9 +125,6 @@ func TestValidateAuth(t *testing.T) {
 }
 
 func TestGetUserInfo(t *testing.T) {
-	if *integration {
-		t.Skip()
-	}
 
 	testUI := UserInfo{
 		UserID: "test",
