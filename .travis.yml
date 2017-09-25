@@ -15,11 +15,10 @@ matrix:
 
 before_install:
   - go get github.com/mattn/goveralls
-  - chmod +x integration_test_setup.sh
 
 before_script:
   - make deps
-  - ./integration_test_setup.sh
+  - ./integration_test.sh
 
 script:
   - make qa

@@ -8,9 +8,18 @@ docker build -t miracl/maas-sdk-go-example .
 docker-compose up -d
 RC=$(docker-compose ps | grep -c "Exit 1")
 
-if [ $RC -eq 0 ]
+if [ $RC -ne 0 ]
 then
-    exit 0
-else
     exit 1
 fi
+
+while ! curl http://localhost:8002 > /dev/null ; do
+  sleep 1
+done
+
+cd ..
+go test -integration -v
+
+cd example
+docker-compose down
+rm example
