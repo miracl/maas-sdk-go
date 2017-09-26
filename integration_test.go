@@ -6,7 +6,10 @@ import (
 	"testing"
 )
 
-var integration = flag.Bool("integration", false, "run integration tests")
+var (
+	integration  = flag.Bool("integration", false, "run integration tests")
+	testEndpoint = flag.String("test-endpoint", "http://localhost:8002", "integration test endpoint")
+)
 
 func TestMain(m *testing.M) {
 	flag.Parse()
@@ -18,7 +21,7 @@ func TestProxyConnection(t *testing.T) {
 		t.Skip()
 	}
 
-	req, err := http.NewRequest("GET", "http://localhost:8002", nil)
+	req, err := http.NewRequest("GET", *testEndpoint, nil)
 	if err != nil {
 		t.Error(err)
 	}
