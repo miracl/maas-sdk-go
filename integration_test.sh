@@ -18,7 +18,7 @@ while ! curl http://localhost:8002 > /dev/null ; do
 done
 
 cd ..
-go test -integration -v
+go test -integration
 
 cd example
 docker-compose down
