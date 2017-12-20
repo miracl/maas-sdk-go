@@ -125,7 +125,6 @@ qa: fmtcheck test vet lint coverage cyclo ineffassign misspell astscan
 
 # Get the dependencies
 deps:
-	GOPATH=$(GOPATH) go get ./...
 	GOPATH=$(GOPATH) go get github.com/golang/lint/golint
 	GOPATH=$(GOPATH) go get github.com/jstemmer/go-junit-report
 	GOPATH=$(GOPATH) go get github.com/axw/gocov/gocov
@@ -133,6 +132,8 @@ deps:
 	GOPATH=$(GOPATH) go get github.com/gordonklaus/ineffassign
 	GOPATH=$(GOPATH) go get github.com/client9/misspell/cmd/misspell
 	GOPATH=$(GOPATH) go get github.com/HewlettPackard/gas
+	GOPATH=$(GOPATH) go get -u github.com/golang/dep/cmd/dep
+	GOPATH=$(GOPATH) dep ensure
 
 # Remove any build artifact
 clean:
