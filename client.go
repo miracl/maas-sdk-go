@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+	phttp "github.com/coreos/go-oidc/http"
 	"github.com/coreos/go-oidc/jose"
 	"github.com/coreos/go-oidc/oauth2"
 	"github.com/coreos/go-oidc/oidc"
@@ -25,7 +26,7 @@ type Config struct {
 	ClientSecret    string          // RP client secret at authorization server (`client_secret` in OIDC 1.0). Required.
 	RedirectURI     string          // URI for back redirection from authorization server to RP (`redirect_uri` in OIDC 1.0). Required.
 	DiscoveryURI    string          // DiscoveryURI is the discovery URL of the Miracl OIDC server, without the `.well-known/openid-configuration`
-	HTTPClient      *http.Client    // HTTP client to use for requests to authorization server. If left out, `http.DefaultClient` will be used
+	HTTPClient      phttp.Client    // HTTP client to use for requests to authorization server. If left out, `http.DefaultClient` will be used
 	ProviderRetries int             // Number of retries to make while fetching provider configuration from discovery URI.
 	RetryPeriod     time.Duration   // Wait period between retries.
 	Clock           clockwork.Clock // A clock object. If left out, real clock will be used. Fake clock can be passed for testing.
@@ -69,6 +70,16 @@ type httpDoer interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
+// providerConfigGetter is a local implementation of `oidc.ProviderConfigGetter` interface.
+type providerConfigGetter struct {
+	HTTPClient phttp.Client
+	IssuerURL  string
+}
+
+func (p providerConfigGetter) Get() (oidc.ProviderConfig, error) {
+	return oidc.FetchProviderConfig(p.HTTPClient, p.IssuerURL)
+}
+
 func populateDefaultConfig(cfg Config) Config {
 	if cfg.HTTPClient == nil {
 		cfg.HTTPClient = http.DefaultClient
@@ -79,33 +90,39 @@ func populateDefaultConfig(cfg Config) Config {
 	if cfg.Scope == nil {
 		cfg.Scope = []string{"openid", "email", "sub"}
 	}
+	if cfg.DiscoveryURI == "" {
+		cfg.DiscoveryURI = DiscoveryURI
+	}
 	return cfg
+}
+
+func getProviderConfig(mcfg Config, pcg oidc.ProviderConfigGetter) (provider oidc.ProviderConfig, err error) {
+	for tries := 0; true; {
+		provider, err = pcg.Get()
+		if err == nil {
+			return provider, nil
+		}
+		tries++
+		if tries > mcfg.ProviderRetries {
+			return oidc.ProviderConfig{}, err
+		}
+
+		mcfg.Clock.Sleep(mcfg.RetryPeriod)
+	}
+
+	return
 }
 
 // NewClient instantiates a new `Client` object.
 // Normally you need to populate `ClientID`, `ClientSecret`
 // and `RedirectURI` fields in `mcfg` argument.
 func NewClient(mcfg Config) (mc Client, err error) {
-	discoveryURI := DiscoveryURI
-	if mcfg.DiscoveryURI != "" {
-		discoveryURI = mcfg.DiscoveryURI
-	}
-
 	mcfg = populateDefaultConfig(mcfg)
 
-	var provider oidc.ProviderConfig
-	for tries := 0; true; {
-
-		provider, err = oidc.FetchProviderConfig(mcfg.HTTPClient, discoveryURI)
-		if err == nil {
-			break
-		}
-		tries++
-		if tries > mcfg.ProviderRetries {
-			return nil, err
-		}
-
-		mcfg.Clock.Sleep(mcfg.RetryPeriod)
+	pcg := providerConfigGetter{HTTPClient: mcfg.HTTPClient, IssuerURL: mcfg.DiscoveryURI}
+	provider, err := getProviderConfig(mcfg, pcg)
+	if err != nil {
+		return nil, err
 	}
 
 	credentials := oidc.ClientCredentials{
@@ -118,12 +135,13 @@ func NewClient(mcfg Config) (mc Client, err error) {
 		RedirectURL:    mcfg.RedirectURI,
 		ProviderConfig: provider,
 		Scope:          mcfg.Scope,
+		HTTPClient:     mcfg.HTTPClient,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	oidc.SyncProviderConfig(discoveryURI)
+	oidc.SyncProviderConfig(mcfg.DiscoveryURI)
 
 	oauth, err := oidc.OAuthClient()
 	if err != nil {

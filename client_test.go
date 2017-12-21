@@ -3,12 +3,18 @@ package maas
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"reflect"
 	"testing"
+	"time"
 
 	"github.com/coreos/go-oidc/jose"
 	"github.com/coreos/go-oidc/oauth2"
+	"github.com/coreos/go-oidc/oidc"
+	"github.com/jonboulle/clockwork"
 )
 
 type testOAC struct {
@@ -58,6 +64,28 @@ type testDoer struct {
 func (d *testDoer) Do(rq *http.Request) (*http.Response, error) {
 	d.Request = rq
 	return d.Response, d.Error
+}
+
+type testProviderConfigGetter struct {
+	IssuerURL         string
+	IsFetchSuccessful bool
+	Error             error
+}
+
+func (tp *testProviderConfigGetter) Get() (oidc.ProviderConfig, error) {
+	if !tp.IsFetchSuccessful {
+		tp.IsFetchSuccessful = true
+		return oidc.ProviderConfig{}, tp.Error
+	}
+
+	issuer, err := url.Parse(tp.IssuerURL)
+	if err != nil {
+		return oidc.ProviderConfig{}, err
+	}
+
+	provider := oidc.ProviderConfig{Issuer: issuer}
+
+	return provider, nil
 }
 
 func TestGetAuthRequestURL(t *testing.T) {
@@ -160,4 +188,92 @@ func TestGetUserInfo(t *testing.T) {
 
 	t.Logf("%+v", d.Request)
 
+}
+
+func TestPopulateDefaultConfig(t *testing.T) {
+	var cfg Config
+	cfg = populateDefaultConfig(cfg)
+
+	if cfg.HTTPClient != http.DefaultClient {
+		t.Errorf("Wrong Http client: expected %v, got %v", http.DefaultClient, cfg.HTTPClient)
+	}
+
+	expectedClock := clockwork.NewRealClock()
+	if cfg.Clock != expectedClock {
+		t.Errorf("Wrong Clock: expected %v, got %v", expectedClock, cfg.Clock)
+	}
+
+	expectedScope := []string{"openid", "email", "sub"}
+	if !reflect.DeepEqual(cfg.Scope, expectedScope) {
+		t.Errorf("Wrong Scope: expected %v, got %v", expectedScope, cfg.Scope)
+	}
+
+	expectedDiscoveryURI := DiscoveryURI
+	if cfg.DiscoveryURI != expectedDiscoveryURI {
+		t.Errorf("Wrong DiscoveryURI: expected %v, got %v", expectedDiscoveryURI, cfg.DiscoveryURI)
+	}
+}
+
+func TestGetProviderConfig(t *testing.T) {
+	mcfg := Config{
+		DiscoveryURI:    "test-url",
+		Clock:           clockwork.NewRealClock(),
+		ProviderRetries: 5,
+		RetryPeriod:     10 * time.Millisecond,
+	}
+
+	tpcg := testProviderConfigGetter{IssuerURL: mcfg.DiscoveryURI, Error: errors.New("failed to fetch provider config")}
+	provider, err := getProviderConfig(mcfg, &tpcg)
+	if err != nil {
+		t.Error(err)
+	}
+
+	expectedURL := "test-url"
+	if provider.Issuer.String() != expectedURL {
+		t.Errorf("Wrong ProviderConfig issuer: expected %v, got %v", expectedURL, provider.Issuer)
+	}
+
+	tpcg.IsFetchSuccessful = false
+	mcfg.ProviderRetries = 0
+	_, err = getProviderConfig(mcfg, &tpcg)
+	if err != tpcg.Error {
+		t.Error("Unexpected error returned")
+	}
+}
+
+func TestNewClient(t *testing.T) {
+	hc := &testDiscoveryDoer{}
+
+	_, err := NewClient(Config{
+		ClientID:     "test-id",
+		ClientSecret: "test-secret",
+		RedirectURI:  "test.com",
+		DiscoveryURI: "http://test-discovery.com",
+		HTTPClient:   hc,
+	})
+
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+type testDiscoveryDoer struct {
+	Request  *http.Request
+	Response *http.Response
+	Error    error
+}
+
+func (d *testDiscoveryDoer) Do(rq *http.Request) (*http.Response, error) {
+	d.Request = rq
+
+	jsonString := `{"subject_types_supported":["public"],"userinfo_signing_alg_values_supported":["RS256","RS384","RS512"],"claims_supported":["sub","iss","email","email_verified"],"issuer":"http://test-discovery.com","response_types_supported":["code","id_token","id_token token","code id_token","code id_token token"],"token_endpoint":"http://test-discovery.com/oidc/token","jwks_uri":"http://test-discovery.com/oidc/certs","scopes_supported":["openid","profile","email"],"token_endpoint_auth_methods_supported":["client_secret_post","client_secret_basic"],"id_token_signing_alg_values_supported":["RS384","RS512","RS256"],"userinfo_endpoint":"http://test-discovery.com/oidc/userinfo","authorization_endpoint":"http://test-discovery.com/authorize"}`
+	pcfg := oidc.ProviderConfig{}
+	pcfg.UnmarshalJSON([]byte(jsonString))
+	body, _ := pcfg.MarshalJSON()
+
+	d.Response = &http.Response{
+		Body: ioutil.NopCloser(bytes.NewBuffer(body)),
+	}
+
+	return d.Response, d.Error
 }
