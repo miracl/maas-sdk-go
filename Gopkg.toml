@@ -1,0 +1,8 @@
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/coreos/go-oidc"
+
+[[constraint]]
+  name = "github.com/jonboulle/clockwork"
+  version = "0.1.0"
