@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  web:
+    image: miracl/maas-sdk-go-example
+    build: .
+    command: -client-id *** -client-secret *** -redirect ***
+    environment: 
+      - HTTP_PROXY=http://proxy:3128
+      - HTTPS_PROXY=http://proxy:3128
+      - FTP_PROXY=http://proxy:3128
+      - NO_PROXY=localhost,127.0.0.1
+      - http_proxy=http://proxy:3128
+      - https_proxy=http://proxy:3128
+      - ftp_proxy=http://proxy:3128
+      - no_proxy=localhost,127.0.0.1
+    ports:
+      - "8002:8002"
+    links:
+      - proxy
+
+  proxy:
+    image: minimum2scp/squid

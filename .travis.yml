@@ -1,3 +1,8 @@
+sudo: required
+
+services:
+  - docker
+
 language: go
 
 go:
@@ -13,6 +18,7 @@ before_install:
 
 before_script:
   - make deps
+  - ./integration_test.sh
 
 script:
   - make qa
