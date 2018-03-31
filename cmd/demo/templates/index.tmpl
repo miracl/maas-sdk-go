@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Go SDK example</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <h1>Go SDK example</h1>
+
+    {{if .UserInfo}}
+    <pre>{{.UserInfo}}</pre>
+    <a href="/">Back</a>
+    {{end}}
+
+    {{if .AuthCode}}
+    <form id="login-form" action="{{.AuthCode}}">
+        <input type="email" placeholder="email address">
+        <input type="submit" value="Login">
+    </form>
+
+    <!-- The following script is used to populate prerollid if provided during the authentication process -->
+    <script type="application/javascript">
+        $(document).ready(function () {
+            $("#login-form").on('submit', function (event) {
+                event.preventDefault();
+                var email = $("input[type=email]").val(),
+                    authURL = $(this).attr('action');
+                window.location.href = email ? authURL + '&prerollid=' + email : authURL
+            });
+        });
+    </script>
+    {{end}}
+
+</body>
+
+</html>
