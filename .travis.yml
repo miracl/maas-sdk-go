@@ -8,17 +8,18 @@ matrix:
   allow_failures:
     - go: master
 
-before_install:
+install:
   - go get github.com/mattn/goveralls
-
+  - go get github.com/golang/lint/golint
+  - go get github.com/golang/dep/cmd/dep
+  - dep ensure
 before_script:
-  - make deps
-
+  - test -z "$(gofmt -s -l . 2>&1 | grep -v vendor | tee /dev/stderr)"
+  - golint -set_exit_status $(go list ./...)
 script:
-  - make qa
-
-after_failure:
-  - cat ./target/test/report.xml
-
+  - go test -coverprofile=coverage.out -race -vet all ./pkg/...
 after_success:
-  - if [ "$TRAVIS_GO_VERSION" = "master" ]; then $HOME/gopath/bin/goveralls -covermode=count -coverprofile=target/report/coverage.out -service=travis-ci; fi;
+  - goveralls -coverprofile=coverage.out -service=travis-ci
+
+services:
+  - docker
