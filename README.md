@@ -28,5 +28,5 @@ The demo application is in `cmd/demo`.
 ```
 cd ~/go/src/github.com/miracl/maas-sdk-go
 docker build -f cmd/demo/Dockerfile -t maas-sdk-go-demo .
-docker run -p 8002:8002 maas-sdk-go-demo -client-id <client-id> -client-secret <client-secret> -redirect <redirect-url>
+docker run -p 8002:8002 maas-sdk-go-demo -client-id <client-id> -client-secret <client-secret> -redirect-url <redirect-url>
 ```
