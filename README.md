@@ -20,7 +20,7 @@ The demo application is in `cmd/demo`.
 - `client-id` - the client id, registered in Miracl OIDC provider
 - `client-secret`- the corresponding client secret
 - `redirect-url` - the registered redirect URL
-- `addr` - Host to bind and port to listen on in the form host:port; the default is ":8002" which means bind all available interfaces and listen on port 8002
+- `addr` - Host to bind and port to listen on in the form host:port; the default is ":8000" which means bind all available interfaces and listen on port 8000
 - `templates-dir` - Folder holding the templates - absolute or relative to binary
 
 ### Build and run as Docker container
@@ -28,5 +28,5 @@ The demo application is in `cmd/demo`.
 ```
 cd ~/go/src/github.com/miracl/maas-sdk-go
 docker build -f cmd/demo/Dockerfile -t maas-sdk-go-demo .
-docker run -p 8002:8002 maas-sdk-go-demo -client-id <client-id> -client-secret <client-secret> -redirect-url <redirect-url>
+docker run -p 8000:8000 maas-sdk-go-demo -client-id <client-id> -client-secret <client-secret> -redirect-url <redirect-url>
 ```

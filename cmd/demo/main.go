@@ -21,12 +21,12 @@ type flags struct {
 }
 
 func parseFlags(f *flags) {
-	flag.StringVar(&f.addr, "addr", ":8002", "Listen address")
+	flag.StringVar(&f.addr, "addr", ":8000", "Listen address")
 	flag.StringVar(&f.templatesDir, "templates-dir", "templates", "Template files location")
 
 	flag.StringVar(&f.clientID, "client-id", "", "OIDC Client Id")
 	flag.StringVar(&f.clientSecret, "client-secret", "", "OIDC Client Secret")
-	flag.StringVar(&f.redirectURL, "redirect-url", "localhost:8002/login", "Redirect URL")
+	flag.StringVar(&f.redirectURL, "redirect-url", "localhost:8000/login", "Redirect URL")
 	flag.StringVar(&f.issuer, "issuer", mfa.Issuer, "Backend url")
 	flag.Parse()
 }
