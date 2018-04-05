@@ -53,7 +53,7 @@ func (e *example) index(w http.ResponseWriter, r *http.Request) {
 	state := e.stateGenerator()
 	e.stateStorage.add(state)
 	e.html.Execute(w, map[string]string{
-		"AuthCode": e.mfa.OAuthConfig.AuthCodeURL(state),
+		"AuthURL": e.mfa.OAuthConfig.AuthCodeURL(state),
 	})
 }
 
