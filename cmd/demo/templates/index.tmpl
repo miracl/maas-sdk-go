@@ -4,36 +4,75 @@
 <head>
     <meta charset="utf-8">
     <title>Go SDK example</title>
+    <style type="text/css">
+        html, body {
+            font-family: sans-serif;
+        }
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        main {
+            margin: auto;
+            max-width: 920px;
+        }
+
+        h1 {
+            border-bottom: 1px solid #ccc;
+            font-weight: 300;
+            padding-bottom: 0.67em;
+        }
+
+        a, input {
+            border-radius: 4px;
+            display: inline-block;
+            margin: 8px 0;
+            padding: 12px;
+        }
+
+        input[type=email] {
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        a, input[type=submit] {
+            background-color: #0E78B9;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            text-transform: uppercase;
+        }
+
+        a:hover, input[type=submit]:hover {
+            background-color: #1978A0;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Go SDK example</h1>
+    <main>
+        <h1>Go SDK example</h1>
 
-    {{if .UserInfo}}
-    <pre>{{.UserInfo}}</pre>
-    <a href="/">Back</a>
-    {{end}}
+        {{if .UserInfo}}
+        <pre>{{.UserInfo}}</pre>
+        <a href="/">Back</a>
+        {{end}}
 
-    {{if .AuthCode}}
-    <form id="login-form" action="{{.AuthCode}}">
-        <input type="email" placeholder="email address">
-        <input type="submit" value="Login">
-    </form>
+        {{if .AuthURL}}
+        <form id="login-form" action="{{.AuthURL}}">
+            <input type="email" name="email" placeholder="Email Address">
+            <input type="submit" value="Login">
+        </form>
 
-    <!-- The following script is used to populate prerollid if provided during the authentication process -->
-    <script type="application/javascript">
-        $(document).ready(function () {
-            $("#login-form").on('submit', function (event) {
+        <!-- The following script is used to populate prerollid if provided during the authentication process -->
+        <script type="application/javascript">
+            document.getElementById("login-form").addEventListener("submit", function (event) {
                 event.preventDefault();
-                var email = $("input[type=email]").val(),
-                    authURL = $(this).attr('action');
-                window.location.href = email ? authURL + '&prerollid=' + email : authURL
+                var email = new FormData(event.target).get('email');
+                window.location = email ? event.target.action + '&prerollid=' + email : event.target.action;
             });
-        });
-    </script>
-    {{end}}
+        </script>
+        {{end}}
+    </main>
 
 </body>
 
