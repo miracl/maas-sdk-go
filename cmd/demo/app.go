@@ -104,7 +104,7 @@ func (e *example) config(w http.ResponseWriter, r *http.Request) {
 		state,
 	}
 
-	configJSON, err := json.MarshalIndent(config, "", "	")
+	configJSON, err := json.Marshal(config)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

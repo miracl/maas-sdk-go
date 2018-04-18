@@ -13,11 +13,17 @@ install:
   - go get github.com/golang/lint/golint
   - go get github.com/golang/dep/cmd/dep
   - dep ensure
+  - git clone https://github.com/miracl/maas-sdk-integration.git
 before_script:
   - test -z "$(gofmt -s -l . 2>&1 | grep -v vendor | tee /dev/stderr)"
   - golint -set_exit_status $(go list ./...)
+  - docker build -f maas-sdk-integration/Dockerfile -t test-suite ./maas-sdk-integration
+  - docker build -f cmd/demo/Dockerfile -t demo .
+  - docker-compose -f maas-sdk-integration/docker-compose-linux.yml up -d
+  - docker run --rm -it --network maassdkintegration_default test-suite -c "go run cmd/wait-for/main.go -addr http://demo:8000/config"
 script:
   - go test -coverprofile=coverage.out -race -vet all ./pkg/...
+  - docker run --rm -it --network maassdkintegration_default test-suite -c "go test -tags 'ignoredefaultcurves BN254CX' -v -addr http://demo:8000 -mfa-api https://api.mpin.io"
 after_success:
   - goveralls -coverprofile=coverage.out -service=travis-ci
 
