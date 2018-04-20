@@ -41,6 +41,7 @@ func main() {
 	}
 	http.HandleFunc("/", example.index)
 	http.HandleFunc("/login", example.login)
+	http.HandleFunc("/config", example.config)
 
 	log.Printf("Service started. Listening on %v", flags.addr)
 	log.Fatal(http.ListenAndServe(flags.addr, nil))

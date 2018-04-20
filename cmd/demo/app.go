@@ -89,3 +89,27 @@ func (e *example) login(w http.ResponseWriter, r *http.Request) {
 		"UserInfo": string(userInfoJSON),
 	})
 }
+
+func (e *example) config(w http.ResponseWriter, r *http.Request) {
+	state := e.stateGenerator()
+	e.stateStorage.add(state)
+
+	config := struct {
+		ClientID    string `json:"clientID"`
+		RedirectURL string `json:"redirectURL"`
+		State       string `json:"state"`
+	}{
+		e.mfa.OAuthConfig.ClientID,
+		e.mfa.OAuthConfig.RedirectURL,
+		state,
+	}
+
+	configJSON, err := json.MarshalIndent(config, "", "	")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(configJSON)
+}
