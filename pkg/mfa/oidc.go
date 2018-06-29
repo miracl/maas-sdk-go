@@ -63,7 +63,7 @@ func (c *Client) init(ctx context.Context) (*Client, error) {
 	return c, nil
 }
 
-// Verify verifis the IDToken.
+// Verify verifies the IDToken.
 func (c *Client) Verify(ctx context.Context, code string) (*oauth2.Token, error) {
 	oauth2Token, err := c.OAuthConfig.Exchange(ctx, code)
 	if err != nil {
@@ -81,6 +81,11 @@ func (c *Client) Verify(ctx context.Context, code string) (*oauth2.Token, error)
 	}
 
 	return oauth2Token, nil
+}
+
+// Issuer returns the client's issuer.
+func (c *Client) Issuer() string {
+	return c.issuer
 }
 
 // WithDiscoveryURL sets DiscoveryURL.
