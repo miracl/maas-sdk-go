@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"strconv"
 
+	"github.com/miracl/maas-sdk-go/pkg/dvs"
 	"github.com/miracl/maas-sdk-go/pkg/mfa"
 	"golang.org/x/oauth2"
 )
@@ -18,6 +20,7 @@ type example struct {
 	stateGenerator func() string
 	stateStorage   set
 	mfa            *mfa.Client
+	dvs            *dvs.Client
 }
 
 func new(f *flags) (*example, error) {
@@ -37,6 +40,8 @@ func new(f *flags) (*example, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	e.dvs = dvs.New(context.Background(), e.mfa)
 
 	// parse the template
 	e.html, err = template.ParseFiles(
@@ -112,4 +117,41 @@ func (e *example) config(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(configJSON)
+}
+
+func (e *example) verify(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	signature, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+	}
+
+	dvsReq := &dvs.VerifyRequest{}
+	if err := json.Unmarshal(signature, dvsReq); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	verificationResult, err := e.dvs.VerifySignature(r.Context(), dvsReq)
+
+	verifyRes := struct {
+		Valid  bool   `json:"valid"`
+		Status string `json:"status"`
+	}{
+		err == nil,
+		verificationResult.String(),
+	}
+
+	verifyResJSON, err := json.Marshal(verifyRes)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(verifyResJSON))
 }
