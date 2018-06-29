@@ -23,7 +23,7 @@ before_script:
   - docker run --rm -it --network maassdkintegration_default test-suite -c "go run cmd/wait-for/main.go -addr http://demo:8000/config"
 script:
   - go test -coverprofile=coverage.out -race -vet all ./pkg/...
-  - docker run --rm -it --network maassdkintegration_default test-suite -c "go test -tags 'ignoredefaultcurves BN254CX' -v -addr http://demo:8000 -mfa-api https://api.mpin.io"
+  - docker run --rm -it --network maassdkintegration_default test-suite -c "go test -tags 'ignoredefaultcurves BN254CX' -v -addr http://demo:8000 -mfa-api https://api.mpin.io -client-secret $MFA_CLIENT_SECRET"
 after_success:
   - goveralls -coverprofile=coverage.out -service=travis-ci
 
