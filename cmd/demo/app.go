@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/miracl/maas-sdk-go/pkg/dvs"
 	"github.com/miracl/maas-sdk-go/pkg/mfa"
@@ -154,4 +155,35 @@ func (e *example) verify(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(verifyResJSON))
+}
+
+func (e *example) hash(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	doc, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+	}
+
+	docHash := e.dvs.CreateDocumentHash(string(doc))
+
+	hashRes := struct {
+		Hash      string `json:"hash"`
+		Timestamp int    `json:"timestamp"`
+	}{
+		docHash,
+		int(time.Now().Unix()),
+	}
+
+	hashResJSON, err := json.Marshal(hashRes)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(hashResJSON))
 }
